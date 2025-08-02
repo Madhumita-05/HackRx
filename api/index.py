@@ -1,9 +1,11 @@
+# api/index.py
+
 # --- 1. Imports ---
+import os  # Import the 'os' module to access environment variables
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
-import uvicorn
 import logging
 
 # Set up logging for better visibility
@@ -11,14 +13,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- 2. Pydantic Models for API Request and Response ---
-# These models ensure that the incoming and outgoing data
-# strictly adhere to the required format.
-
 class HackathonRequest(BaseModel):
     """
     Data model for the incoming request payload.
-    - 'documents' is the URL to the document blob.
-    - 'questions' is a list of natural language queries.
     """
     documents: str = Field(..., description="URL to the document blob (e.g., PDF, DOCX)")
     questions: List[str] = Field(..., description="List of natural language questions to ask")
@@ -26,32 +23,17 @@ class HackathonRequest(BaseModel):
 class HackathonResponse(BaseModel):
     """
     Data model for the outgoing JSON response.
-    - 'answers' is a list of strings, where each string is the
-      answer corresponding to a question in the request.
     """
     answers: List[str] = Field(..., description="List of answers corresponding to the questions")
 
-
 # --- 3. FastAPI Application Setup ---
-# Create a FastAPI instance
 app = FastAPI(
     title="HackRX LLM-Powered Query-Retrieval API",
     description="API for HackRX submission, providing a mock implementation for testing.",
     version="1.0.0",
 )
 
-# Define the base URL for local development
-BASE_URL = "http://localhost:8000/api/v1"
-
 # --- 4. Mock Data and Logic ---
-# This is the "fake" logic requested by the user.
-# In a real implementation, this would be replaced by
-# LLM calls, vector database searches, and document processing.
-
-# This dictionary holds the mock answers for the sample questions.
-# The keys are the questions, and the values are the expected answers.
-# This ensures that the output perfectly matches the example provided
-# in the problem statement.
 MOCK_ANSWERS_DB = {
     "What is the grace period for premium payment under the National Parivar Mediclaim Plus Policy?":
         "A grace period of thirty days is provided for premium payment after the due date to renew or continue the policy without losing continuity benefits.",
@@ -85,12 +67,12 @@ async def run_submission(request_data: HackathonRequest, request: Request):
     logger.info(f"Received request for documents: {request_data.documents}")
     logger.info(f"Received {len(request_data.questions)} questions.")
 
-    # --- 5.1. Authentication Check (Mocked) ---
-    # The problem statement specifies a Bearer token. This is a simple
-    # mock check to show where a real auth check would go.
+    # --- 5.1. Authentication Check (Updated to use environment variable) ---
     auth_header = request.headers.get("Authorization")
-    required_token = "Bearer 2b85f37b231edd800c4ade1d01fb1745ecc3bf24a453c10ebe81ade8ad8a1928"
-    if auth_header != required_token:
+    # Fetch the token from the environment variable
+    required_token = os.environ.get("AUTH_TOKEN")
+    
+    if not required_token or auth_header != required_token:
         logger.warning(f"Invalid Authorization token received: {auth_header}")
         raise HTTPException(
             status_code=401,
@@ -99,35 +81,20 @@ async def run_submission(request_data: HackathonRequest, request: Request):
     logger.info("Authorization token is valid.")
 
     # --- 5.2. Placeholder Workflow ---
-    # Simulate the pipeline steps mentioned in the problem statement.
-    # We will use the mock data to return the correct answers.
-
     answers = []
     for i, question in enumerate(request_data.questions):
         logger.info(f"Processing question {i+1}: '{question}'")
-
-        # LLM Parser (Mocked): Simulate parsing the question.
-        # In a real app, this would extract keywords or intent.
-        
-        # Embedding Search & Clause Matching (Mocked):
-        # We're just looking up the question in our mock database.
         answer = MOCK_ANSWERS_DB.get(question, "Answer not found in the mock data.")
-
-        # Logic Evaluation & JSON Output (Mocked):
-        # The mock answer is already in the final format.
         answers.append(answer)
 
     # --- 5.3. Final Response Construction ---
-    # Create the final JSON response based on the generated answers.
     response_payload = HackathonResponse(answers=answers)
     logger.info("Successfully processed all questions. Returning response.")
 
     return JSONResponse(content=response_payload.dict())
 
 # --- 6. Main Entry Point ---
-# This part is needed to run the application using `uvicorn`.
-# It's not part of the API endpoint itself.
+# This part is for local development and is ignored by Vercel
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-# uvicorn main:app --reload --host 0.0.0.0 --port 8000

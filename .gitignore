@@ -1,3 +1,5 @@
+__pycache__/
+*.pyc
 # Ignore virtual environments
 bajajenv/
 venv/
