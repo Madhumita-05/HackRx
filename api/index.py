@@ -11,10 +11,10 @@ from pydantic import BaseModel
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Import the core logic from the uploaded files
-from document_processor import process_document
-from query_parser import llm_parse_query  # <-- Added the missing import
-from vector_store import create_pinecone_index_and_upsert, semantic_search_pinecone, delete_pinecone_index
-from answer_generator import llm_synthesize_answer
+from .document_processor import process_document
+from .query_parser import llm_parse_query  # <-- Added the missing import
+from .vector_store import create_pinecone_index_and_upsert, semantic_search_pinecone, delete_pinecone_index
+from .answer_generator import llm_synthesize_answer
 
 # FastAPI application setup
 app = FastAPI()
