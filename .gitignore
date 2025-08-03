@@ -3,3 +3,4 @@ __pycache__/
 # Ignore virtual environments
 bajajenv/
 venv/
+codes.txt
